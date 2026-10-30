@@ -33,7 +33,9 @@ def ensure_corpus(ai, collection, model, progress=lambda message: None):
         contents = [f'\nRepresenta el siguiente fragmento de un documento\npara recuperación semántica en un sistema RAG.\n\nFragmento:\n\n{chunks[i]}\n' for i in ids]
         for attempt in range(3):
             try:
-                result = ai.models.embed_content(model=model, contents=contents,
+                # Embedding 2 aggregates plain strings; Content objects keep inputs separate.
+                separate_contents = [types.Content(parts=[types.Part(text=t)]) for t in contents]
+                result = ai.models.embed_content(model=model, contents=separate_contents,
                     config=types.EmbedContentConfig(output_dimensionality=3072))
                 break
             except Exception as exc:

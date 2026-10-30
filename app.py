@@ -132,7 +132,7 @@ try:
 except Exception as exc:
     code = str(getattr(exc, 'code', ''))
     st.warning('No se pudo completar la carga del PDF. Revisa la conexión y la cuota de Gemini.'
-               + (f' Código: {code}.' if code.isdigit() else ''))
+               + (f' Código: {code}.' if code.isdigit() else f' Tipo: {type(exc).__name__}.'))
     if st.button('Reintentar carga'):
         st.rerun()
     st.stop()
