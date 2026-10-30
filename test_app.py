@@ -21,7 +21,7 @@ class AppTests(TestCase):
         ai.models.generate_content_stream.side_effect = lambda **kw: iter([SimpleNamespace(text="Respuesta "), SimpleNamespace(text="respaldada [Fuente 1].")])
         collection = mongo.__getitem__.return_value.__getitem__.return_value
         collection.aggregate.return_value = [{"id": 12, "texto": "Evidencia completa", "score": 0.9}]
-        with patch("google.genai.Client", return_value=ai), patch("pymongo.MongoClient", return_value=mongo):
+        with patch("google.genai.Client", return_value=ai), patch("pymongo.MongoClient", return_value=mongo), patch("bootstrap_corpus.ensure_corpus", return_value={"count": 106}):
             app = AppTest.from_file(APP)
             app.secrets = {"app": {"GOOGLE_API_KEY": "test", "MONGODB_URI": "mongodb://test"}}
             app.run()

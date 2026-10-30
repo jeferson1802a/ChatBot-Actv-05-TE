@@ -1,11 +1,13 @@
 """Interfaz RAG con respuesta progresiva y diagnóstico de latencia."""
 import os
+import hashlib
 from time import perf_counter
 
 import pymongo
 import streamlit as st
 from google import genai
 from google.genai import types
+from bootstrap_corpus import ensure_corpus
 
 st.set_page_config(page_title="AI Agents RAG", page_icon="🤖")
 st.title("🤖 Asistente RAG sobre Agentes de IA")
@@ -110,6 +112,29 @@ try:
     collection = mongo["pdf_embeddings_db"]["ai_agents_vectors"]
 except Exception:
     st.error("No se pudo iniciar la conexión. Revisa la configuración local.")
+    st.stop()
+
+
+@st.cache_resource(show_spinner=False)
+def prepare_document(namespace, embedding_model, _ai, _collection):
+    # The cache is scoped to the configured connection; secrets stay on the server.
+    with st.status('Preparando el documento oficial…', expanded=True) as status:
+        result = ensure_corpus(_ai, _collection, embedding_model,
+                               progress=lambda text: status.update(label=text))
+        status.update(label=f"Documento preparado: {result['count']} fragmentos", state='complete', expanded=False)
+    return result
+
+
+try:
+    namespace = hashlib.sha256((uri + key).encode()).hexdigest()
+    corpus = prepare_document(namespace, embed_model, ai, collection)
+    st.caption(f"Documento cargado · {corpus['count']} fragmentos")
+except Exception as exc:
+    code = str(getattr(exc, 'code', ''))
+    st.warning('No se pudo completar la carga del PDF. Revisa la conexión y la cuota de Gemini.'
+               + (f' Código: {code}.' if code.isdigit() else ''))
+    if st.button('Reintentar carga'):
+        st.rerun()
     st.stop()
 
 k = st.sidebar.selectbox("Fragmentos recuperados (k)", [3, 5, 10], index=1)
