@@ -66,3 +66,8 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+.venv/
+.localenv/
+__pycache__/
+.streamlit/secrets.toml
+.env
